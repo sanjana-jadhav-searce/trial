@@ -85,7 +85,7 @@ func main() {
 
 	twilioConfig = TwilioConfig{
 		AccountSID:  "ACe2408ed74c8ebd1cbf6fc3f7dff60f20",
-		AuthToken:   "7820a5baa3a990e29d7350160dd4d8f0",
+		AuthToken:   "32727baaed87150f0ff8423e7acdaf76",
 		PhoneNumber: "+13156311532",
 	}
 
@@ -99,11 +99,11 @@ func main() {
 	router.HandleFunc("/interviewer/{id}", deleteInterviewer).Methods("DELETE")
 	router.HandleFunc("/interviewers", GetAllInterviewers).Methods("GET")
 
-	router.HandleFunc("/candidates", createCandidate).Methods("POST")
+	router.HandleFunc("/candidate", createCandidate).Methods("POST")
 	router.HandleFunc("/candidates", getAllCandidates).Methods("GET")
-	router.HandleFunc("/candidates/{id}", getCandidate).Methods("GET")
-	router.HandleFunc("/candidates/{id}", updateCandidate).Methods("PUT")
-	router.HandleFunc("/candidates/{id}", deleteCandidate).Methods("DELETE")
+	router.HandleFunc("/candidate/{id}", getCandidate).Methods("GET")
+	router.HandleFunc("/candidate/{id}", updateCandidate).Methods("PUT")
+	router.HandleFunc("/candidate/{id}", deleteCandidate).Methods("DELETE")
 
 	router.HandleFunc("/hr/{id}", getHR).Methods("GET")
 	router.HandleFunc("/hr", createHR).Methods("POST")
@@ -155,8 +155,9 @@ func createInterviewer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	SendResponse(map[string]string{"message": "Interviewer Created Successfully"}, w)
 
-	w.WriteHeader(http.StatusCreated)
+	// w.WriteHeader(http.StatusCreated)
 }
 
 func getInterviewer(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +216,8 @@ func createCandidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	SendResponse(map[string]string{"message": "Candidate Created Successfully"}, w)
+	// w.WriteHeader(http.StatusCreated)
 }
 
 func getCandidate(w http.ResponseWriter, r *http.Request) {
@@ -273,8 +275,8 @@ func createHR(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
+	SendResponse(map[string]string{"message": "HR Created Successfully"}, w)
+	// w.WriteHeader(http.StatusCreated)
 }
 
 func getHR(w http.ResponseWriter, r *http.Request) {
@@ -388,8 +390,8 @@ func updateCandidate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "Candidate Details Updated Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func deleteCandidate(w http.ResponseWriter, r *http.Request) {
@@ -408,7 +410,8 @@ func deleteCandidate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "Candidate was deleted Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func getAllCandidates(w http.ResponseWriter, r *http.Request) {
@@ -460,8 +463,8 @@ func updateHR(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "HR Details Updated Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func deleteHR(w http.ResponseWriter, r *http.Request) {
@@ -479,8 +482,8 @@ func deleteHR(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "HR was deleted Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func updateInterviewer(w http.ResponseWriter, r *http.Request) {
@@ -504,7 +507,9 @@ func updateInterviewer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "Interviewer Details Updated Successfully"}, w)
+
+	// w.WriteHeader(http.StatusOK)
 }
 
 func deleteInterviewer(w http.ResponseWriter, r *http.Request) {
@@ -523,7 +528,8 @@ func deleteInterviewer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "Interviewer was deleted Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func GetAllInterviewers(w http.ResponseWriter, r *http.Request) {
@@ -589,6 +595,9 @@ func UpdateInterview(w http.ResponseWriter, r *http.Request) {
 	id := params["id"]
 
 	var interview Interview
+	var interviewer Interviewer
+	var candidate Candidate
+	var hr HR
 
 	err := json.NewDecoder(r.Body).Decode(&interview)
 	if err != nil {
@@ -609,7 +618,63 @@ func UpdateInterview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	interviewer, err = GetInterviewerByID(interview.InterviewerID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// err = AddOutgoingCallerID(twilioConfig.AccountSID, twilioConfig.AuthToken, interviewer.PhoneNumber)
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
+
+	// fmt.Println("Phone number added to valid caller IDs successfully.")
+
+	// Get the HR's phone number
+	hr, err = GetHRByID(interview.HRID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// err = AddOutgoingCallerID(twilioConfig.AccountSID, twilioConfig.AuthToken, hr.PhoneNumber)
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
+
+	// fmt.Println("Phone number added to valid caller IDs successfully.")
+
+	// Get the candidate's phone number
+	candidate, err = GetCandidateByID(interview.CandidateID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = publishMessage(interviewer.PhoneNumber, "Updated interview schedule :  "+interview.ScheduledTime+" "+interview.InterviewLink)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = publishMessage(hr.PhoneNumber, "Updated interview schedule :  "+interview.ScheduledTime+" "+interview.InterviewLink)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = publishMessage(candidate.PhoneNumber, "Updated interview schedule :  "+interview.ScheduledTime+" "+interview.InterviewLink)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	SendResponse(map[string]string{"message": "Interviewer Details are Updated Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func DeleteInterview(w http.ResponseWriter, r *http.Request) {
@@ -629,7 +694,8 @@ func DeleteInterview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	SendResponse(map[string]string{"message": "Interview is been deleted Successfully"}, w)
+	// w.WriteHeader(http.StatusOK)
 }
 
 func GetAllInterviews(w http.ResponseWriter, r *http.Request) {
@@ -824,7 +890,8 @@ func createInterview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	SendResponse(map[string]string{"message": "Interview Created Successfully"}, w)
+	// w.WriteHeader(http.StatusCreated)
 }
 
 func publishMessage(phoneNumber, message string) error {
@@ -977,4 +1044,9 @@ func generateInterviewLink() string {
 	interviewLink = interviewLink[:linkLength]
 	interviewLink = "https://" + interviewLink
 	return interviewLink
+}
+
+func SendResponse(v any, w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(v)
 }
